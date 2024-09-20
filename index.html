@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple Drawing App</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; touch-action: none; }
+    #controls {
+      position: absolute; top: 10px; left: 10px; z-index: 10;
+      background: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 5px;
+    }
+    .button { padding: 5px 10px; margin: 5px; background: rgba(200, 200, 200, 0.8);
+      border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <div id="controls">
+    <button class="button" onclick="undo()">Undo (E)</button>
+    <button class="button" onclick="redo()">Redo (R)</button>
+    <button class="button" onclick="clearCanvas()">Clear Canvas</button>
+  </div>
+<script>
+  let gfx;
+  let previousX = null;
+  let previousY = null;
+  let history = [];
+  let redoStack = [];
+  const maxHistorySize = 50;
+
+  function setup() {
+    createCanvas(windowWidth, windowHeight);
+    gfx = createGraphics(windowWidth, windowHeight);
+    gfx.background(255);
+    saveHistory();
+
+    // Keyboard events
+    document.addEventListener('keydown', handleKeyDown);
+  }
+
+  function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+    let newGfx = createGraphics(windowWidth, windowHeight);
+    newGfx.background(255);
+    newGfx.image(gfx, 0, 0);
+    gfx = newGfx;
+    saveHistory();
+  }
+
+  function draw() {
+    background(255);
+    image(gfx, 0, 0);
+  }
+
+  function touchStarted(event) {
+    if (event.target.closest('#controls')) return;
+    saveHistory();
+    redoStack = [];
+    previousX = mouseX;
+    previousY = mouseY;
+    return false;
+  }
+
+  function touchMoved(event) {
+    if (event.target.closest('#controls')) return;
+    if (previousX === null || previousY === null) {
+      previousX = mouseX;
+      previousY = mouseY;
+    }
+
+    gfx.stroke(0);
+    gfx.strokeWeight(5);
+    gfx.line(previousX, previousY, mouseX, mouseY);
+
+    previousX = mouseX;
+    previousY = mouseY;
+    return false;
+  }
+
+  function touchEnded() {
+    previousX = null;
+    previousY = null;
+  }
+
+  function undo() {
+    if (history.length > 1) {
+      redoStack.push(history.pop());
+      let img = history[history.length - 1];
+      gfx.clear();
+      gfx.image(img, 0, 0);
+    }
+  }
+
+  function redo() {
+    if (redoStack.length > 0) {
+      let img = redoStack.pop();
+      history.push(img);
+      gfx.clear();
+      gfx.image(img, 0, 0);
+    }
+  }
+
+  function saveHistory() {
+    let img = gfx.get();
+    history.push(img);
+    if (history.length > maxHistorySize) {
+      history.shift();
+    }
+  }
+
+  function clearCanvas() {
+    gfx.background(255);
+    saveHistory();
+    redoStack = [];
+  }
+
+  function handleKeyDown(event) {
+    const key = event.key.toLowerCase();
+    if (key === 'e') {
+      undo();
+    } else if (key === 'r') {
+      redo();
+    }
+  }
+</script>
+</body>
+</html>
