@@ -34,7 +34,7 @@
     createCanvas(windowWidth, windowHeight);
     gfx = createGraphics(windowWidth, windowHeight);
     gfx.background(255);
-    saveHistory();
+    saveHistory(); // Save the initial blank canvas state
 
     // Keyboard events
     document.addEventListener('keydown', handleKeyDown);
@@ -56,8 +56,7 @@
 
   function touchStarted(event) {
     if (event.target.closest('#controls')) return;
-    saveHistory();
-    redoStack = [];
+    redoStack = []; // Clear redo stack when a new action starts
     previousX = mouseX;
     previousY = mouseY;
     return false;
@@ -82,6 +81,7 @@
   function touchEnded() {
     previousX = null;
     previousY = null;
+    saveHistory(); // Save the state after the drawing action
   }
 
   function undo() {
